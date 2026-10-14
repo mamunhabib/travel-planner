@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: travel-planner-config
+  namespace: travel-planner
+data:
+  LLM_MODEL: "openai/gpt-oss-20b"
+  GUARD_MODEL: "meta-llama/llama-prompt-guard-2-86m"
+  GUARD_THRESHOLD: "0.5"
+  TEMPERATURE: "0.3"
+  PORT: "8501"

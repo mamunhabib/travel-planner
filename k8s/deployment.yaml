@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: travel-planner
+  namespace: travel-planner
+  labels:
+    app: travel-planner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: travel-planner
+  template:
+    metadata:
+      labels:
+        app: travel-planner
+    spec:
+      imagePullSecrets:
+        - name: git-secret
+      containers:
+        - name: travel-planner
+          image: ghcr.io/mamunhabib/travel-planner:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8501
+              name: http
+          envFrom:
+            - secretRef:
+                name: app-secret
+            - configMapRef:
+                name: travel-planner-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 10
+            periodSeconds: 15

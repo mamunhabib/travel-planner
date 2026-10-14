@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: travel-planner-service
+  namespace: travel-planner
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8083 # External LoadBalancer port on Mac Mini (aligned with PORT_PLAN.md)
+      targetPort: 8501
+      protocol: TCP
+      name: http
+  selector:
+    app: travel-planner
