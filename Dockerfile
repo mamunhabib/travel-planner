@@ -4,7 +4,8 @@ FROM python:3.10-slim
 # 2. Performance & Logging Configuration
 # Forces unbuffered stdout/stderr so logs stream in real time to Kubernetes & Filebeat
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
 
 # 3. OCI Image Label for GitHub Container Registry (GHCR) linking
 LABEL org.opencontainers.image.source="https://github.com/mamunhabib/travel-planner"

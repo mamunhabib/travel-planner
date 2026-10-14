@@ -199,17 +199,17 @@ This implementation plan is **100% customized for your local Mac Mini infrastruc
 ---
 
 ## Phase 8: GitOps Commit, Push & Pipeline Execution
-- [ ] **8.1 Pre-Commit Security Check:**
+- [x] **8.1 Pre-Commit Security Check:**
   - Confirm `.gitignore` strictly ignores local raw secrets (`k8s/raw-*.yaml`), cluster cert (`pub-cert.pem`), and `.env`.
   - Confirm only encrypted files (`k8s/sealed-app-secret.yaml`, `k8s/sealed-git-secret.yaml`) are staged.
-- [ ] **8.2 Commit & Push Codebase to GitHub:**
+- [x] **8.2 Commit & Push Codebase to GitHub:**
   - Stage and commit all application code, Dockerfile, `k8s/` manifests, and `Jenkinsfile`:
     ```bash
     git add .
     git commit -m "feat: complete production travel planner with guardrails, ELK logging, and Jenkins CI/CD"
     git push origin main
     ```
-- [ ] **8.3 Jenkins Pipeline Job Setup & First Build:**
+- [x] **8.3 Jenkins Pipeline Job Setup & First Build:**
   - Open Jenkins at `http://localhost:8081` ➡️ Click **New Item** ➡️ Name: `travel-planner` ➡️ Select **Pipeline**.
   - Under **Pipeline**, select **Pipeline script from SCM** ➡️ Git ➡️ Repository URL (your GitHub repo) ➡️ Branch `*/main` ➡️ Script Path: `Jenkinsfile`.
   - Click **Build Now** and verify all pipeline stages succeed (Checkout ➡️ Build ➡️ Push ➡️ Clean Local Image ➡️ Deploy to K8s).
@@ -217,7 +217,7 @@ This implementation plan is **100% customized for your local Mac Mini infrastruc
 ---
 
 ## Phase 9: Comprehensive End-to-End Verification (All Types)
-- [ ] **9.1 Cluster Pods Status Verification:**
+- [x] **9.1 Cluster Pods Status Verification:**
   - Verify all **5 pods** are in `Running` state:
     - App pod: `travel-planner` (in namespace `travel-planner`).
     - Logging pods: `elasticsearch`, `logstash`, `filebeat`, `kibana` (in namespace `logging`).

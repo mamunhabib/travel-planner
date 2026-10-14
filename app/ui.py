@@ -2,6 +2,12 @@
 Travel Planner - Streamlit UI Layout and Frontend
 Provides an interactive web interface for generating day-trip itineraries with Groq LLM.
 """
+import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path so 'core' and 'utils' are resolvable anywhere
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import streamlit as st
 # [GUARDRAIL INTEGRATION]
 # Import GuardrailException to catch and gracefully display adversarial prompt blocks
