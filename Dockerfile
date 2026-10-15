@@ -16,7 +16,9 @@ WORKDIR /app
 # 5. Dependency Layer Caching:
 # Install dependencies first so Docker can cache this layer
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# BuildKit cache mount keeps downloaded wheels between builds/retries (resilient on slow networks)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --retries 10 --timeout 60 -r requirements.txt
 
 # 6. Copy Application Source Code
 COPY . .
