@@ -48,6 +48,9 @@ pipeline {
 
                 echo "Restarting deployment to trigger fresh GHCR image pull..."
                 sh "kubectl rollout restart deployment travel-planner -n travel-planner"
+
+                echo "Auto-importing Full Kubernetes & AI Security Dashboard into Kibana..."
+                sh "curl -s -X POST 'http://kibana-service.logging.svc.cluster.local:8084/api/saved_objects/_import?overwrite=true' -H 'kbn-xsrf: true' --form file=@k8s/kibana-dashboard.ndjson || true"
             }
         }
     }
