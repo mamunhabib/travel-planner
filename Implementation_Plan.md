@@ -351,3 +351,112 @@ This implementation plan is **100% customized for your local Mac Mini infrastruc
   - Open each printed `https://*.trycloudflare.com` URL from a phone on mobile data.
   - **Expect:** the app and Kibana both load from the public internet for $0.00 cost.
 
+---
+
+## Phase 10: Production Kibana Observability & AI Guardrail Security Dashboard
+
+### 10.1 Architecture & Domain Separation
+Industry best practice for AI-native cloud workloads separates operational concerns into two distinct functional domains on a unified single pane of glass:
+1. **Domain 1: AI Application & Guardrail Security Operations (SecOps)**
+   - **Primary Persona:** Security Engineers & AI Application Developers.
+   - **Mission:** Monitor adversarial prompt injections, guardrail intercept rates, threat scores, and security incident alerts emitted by Meta Llama Prompt Guard 2.
+2. **Domain 2: Kubernetes Infrastructure & Cluster Reliability (SRE / Platform Ops)**
+   - **Primary Persona:** Site Reliability Engineers (SRE) & Kubernetes Cluster Administrators.
+   - **Mission:** Track cluster log ingestion trends, container error rates, active running pods, namespace traffic distribution, and live cluster exceptions.
+
+---
+
+### 10.2 Field Mapping & Aggregation Standard (`.keyword` Rule)
+- **Elasticsearch Schema Standard:** Elasticsearch distinguishes between full-text analyzed strings (`type: text`) and exact keywords (`type: keyword`). Aggregations (`terms`, `cardinality`, `date_histogram`) fail with an `Error` badge on raw `text` fields unless expensive `fielddata=true` is enabled in memory.
+- **Required Dimension Mappings in Visualizations:**
+  | Metric / Visual Element | Raw Field (Full-Text Search Only) | Exact Aggregation Field (Required) |
+  | :--- | :--- | :--- |
+  | **Namespace Grouping & Donut** | `kubernetes.namespace` | `kubernetes.namespace.keyword` |
+  | **Pod Cardinality Count** | `kubernetes.pod.name` | `kubernetes.pod.name.keyword` |
+  | **Container Grouping & Bar Chart** | `kubernetes.container.name` | `kubernetes.container.name.keyword` |
+  | **Timestamp Histogram** | `@timestamp` | `@timestamp` |
+  | **Full-text Alert Filter** | `message` | `message: "SECURITY_ALERT"` |
+
+---
+
+### 10.3 Visual Dashboard Layout & Grid Specifications (4-Tier Hierarchy)
+The dashboard uses Kibana's responsive 48-column grid (`w=48` max width) structured into four clear tiers:
+
+```text
+====================================================================================================
+                        KIBANA SINGLE-PANE-OF-GLASS DASHBOARD LAYOUT
+====================================================================================================
+[ Global Controls: Time Filter (Auto-Refresh: 10s) | Namespace Selector | Container Selector ]
+
+─── TIER 1: EXECUTIVE KPI METRICS (Top Row, y=0, h=6) ─────────────────────────────────────────────
+[ 🚨 Threats Blocked: 10 ]  [ 📝 Total Logs: 25k+ ]  [ ⚠️ Cluster Errors: 4 ]  [ 📦 Running Pods: 7 ]  [ 🏷️ Namespaces: 5 ]
+(w=9, x=0)                 (w=10, x=9)               (w=9, x=19)               (w=10, x=28)            (w=10, x=38)
+
+─── TIER 2: AI GUARDRAIL SECURITY OPERATIONS (SecOps Domain, y=6, h=14) ───────────────────────────
+┌──────────────────────────────────────────────┐┌──────────────────────────────────────────────────┐
+│ 🛡️ AI Threat Spikes Over Time                ││ 🚨 Live Prompt Guard Security Incident Feed       │
+│ (Histogram of blocked injection attempts)    ││ (Table: Timestamp, Pod, Container, Threat Score) │
+│ [w=22, x=0]                                  ││ [w=26, x=22]                                     │
+└──────────────────────────────────────────────┘└──────────────────────────────────────────────────┘
+
+─── TIER 3: K8S INFRASTRUCTURE & TRAFFIC ANALYTICS (SRE Domain, y=20, h=14) ───────────────────────
+┌──────────────────────────────────────────────┐┌──────────────────────────────────────────────────┐
+│ 📈 Log Traffic Volume Over Time by Namespace  ││ 🍩 Namespace Log Distribution (Donut Chart)      │
+│ (Stacked histogram showing ingestion spikes) ││ (Proportional log share across K8s namespaces)   │
+│ [w=30, x=0]                                  ││ [w=18, x=30]                                     │
+└──────────────────────────────────────────────┘└──────────────────────────────────────────────────┘
+
+─── TIER 4: CONTAINER RELIABILITY & LIVE EXCEPTION FEED (SRE Domain, y=34, h=14) ───────────────────
+┌──────────────────────────────────────────────┐┌──────────────────────────────────────────────────┐
+│ 🚢 Top 8 Busiest Containers by Volume        ││ 🛑 Live Cluster Error & Exception Monitor Feed   │
+│ (Horizontal bar chart ranked by log events)  ││ (Table: Timestamp, Namespace, Pod, Error Logs)   │
+│ [w=18, x=0]                                  ││ [w=30, x=18]                                     │
+└──────────────────────────────────────────────┘└──────────────────────────────────────────────────┘
+```
+
+---
+
+### 10.4 Dashboard Panels Catalog
+The declarative dashboard contains 11 saved objects:
+
+1. **`vis-threats-metric`** (Metric, Tier 1):
+   - Counter showing total adversarial prompt attacks intercepted by Meta Llama Prompt Guard 2 (`message: "SECURITY_ALERT"`).
+2. **`vis-total-cluster-logs`** (Metric, Tier 1):
+   - Counter showing total log volume collected across all cluster pods.
+3. **`vis-cluster-errors-metric`** (Metric, Tier 1):
+   - Counter showing all error, warn, and panic events across all containers (`message: ("ERROR" or "WARN" or "FATAL" or "panic")`).
+4. **`vis-active-pods`** (Metric, Tier 1):
+   - Unique pod count calculated using cardinality aggregation on `kubernetes.pod.name.keyword`.
+5. **`vis-active-namespaces`** (Metric, Tier 1):
+   - Unique namespace count calculated using cardinality aggregation on `kubernetes.namespace.keyword`.
+6. **`vis-threats-over-time`** (Bar Histogram, Tier 2):
+   - Time-series histogram tracking frequency and spikes of prompt injection attempts over time.
+7. **`search-security-alerts`** (Saved Search Feed Table, Tier 2):
+   - Real-time incident response table displaying `@timestamp`, `kubernetes.pod.name`, and the full alert message (threat score + flagged payload).
+8. **`vis-cluster-traffic-over-time`** (Stacked Histogram, Tier 3):
+   - Ingestion traffic over time split into stacked sub-buckets by `kubernetes.namespace.keyword`.
+9. **`vis-namespace-donut`** (Donut Chart, Tier 3):
+   - Proportional traffic distribution across namespaces using terms aggregation on `kubernetes.namespace.keyword`.
+10. **`vis-top-containers-bar`** (Horizontal Bar Chart, Tier 4):
+    - Top 8 busiest containers ranked by volume using terms aggregation on `kubernetes.container.name.keyword`.
+11. **`search-cluster-errors`** (Saved Search Table, Tier 4):
+    - Real-time stream of cluster errors and exceptions across all pods (`@timestamp`, `kubernetes.namespace`, `kubernetes.pod.name`, `message`).
+
+---
+
+### 10.5 Declarative GitOps Automation & Import
+- **Dashboard Manifest as Code:** Stored version-controlled in [`k8s/kibana-dashboard.ndjson`](file:///Users/mham/llmops-aiops-bootcamp/03-Travel-Planner/k8s/kibana-dashboard.ndjson).
+- **Automated GitOps CI/CD Deployment:** Added to [`Jenkinsfile`](file:///Users/mham/llmops-aiops-bootcamp/03-Travel-Planner/Jenkinsfile) in the Deploy stage:
+  ```groovy
+  sh "curl -s -X POST 'http://kibana-service.logging.svc.cluster.local:8084/api/saved_objects/_import?overwrite=true' -H 'kbn-xsrf: true' --form file=@k8s/kibana-dashboard.ndjson || true"
+  ```
+- **Direct Terminal Import (Local Verification):**
+  ```bash
+  curl -s -X POST "http://localhost:8084/api/saved_objects/_import?overwrite=true" \
+    -H "kbn-xsrf: true" \
+    --form file=@k8s/kibana-dashboard.ndjson
+  ```
+- **Kibana Browser Access URL:**
+  `http://localhost:8084/app/dashboards#/view/full-k8s-ai-security-dashboard`
+
+
