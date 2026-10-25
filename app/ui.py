@@ -99,6 +99,12 @@ def main():
         )
         
         st.divider()
+        st.subheader("🔗 Platform & Observability")
+        st.markdown("- [🚀 Jenkins CI/CD (8081)](http://localhost:8081)")
+        st.markdown("- [📊 Kibana Logs & Dashboards (8084)](http://localhost:8084)")
+        st.markdown("- [🔍 Elasticsearch API (9200)](http://localhost:9200)")
+
+        st.divider()
         st.caption("Engine: `openai/gpt-oss-20b` via Groq")
         # [GUARDRAIL METADATA] Display the active real-time security pre-filter
         st.caption("🛡️ Security Guardrail: `meta-llama/llama-prompt-guard-2-86m`")
